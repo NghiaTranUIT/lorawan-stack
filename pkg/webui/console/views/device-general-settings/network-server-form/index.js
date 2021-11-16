@@ -13,7 +13,9 @@
 // limitations under the License.
 
 import React from 'react'
+import { defineMessages } from 'react-intl'
 
+import ModalButton from '@ttn-lw/components/button/modal-button'
 import SubmitButton from '@ttn-lw/components/submit-button'
 import SubmitBar from '@ttn-lw/components/submit-bar'
 import Input from '@ttn-lw/components/input'
@@ -21,6 +23,7 @@ import Radio from '@ttn-lw/components/radio-button'
 import Form from '@ttn-lw/components/form'
 import Notification from '@ttn-lw/components/notification'
 import Checkbox from '@ttn-lw/components/checkbox'
+import toast from '@ttn-lw/components/toast'
 
 import PhyVersionInput from '@console/components/phy-version-input'
 import LorawanVersionInput from '@console/components/lorawan-version-input'
@@ -51,6 +54,14 @@ import {
 
 import validationSchema from './validation-schema'
 
+const m = defineMessages({
+  resetTitle: 'Reset to factory defaults',
+  resetSuccess: 'End device reset',
+  resetFailure: 'There was an error resetting the end device',
+  modalMessage:
+    'Are you sure you want to reset session context and MAC state of this end device? For OTAA all data is wiped and end device must rejoin, for ABP session keys, device address and downlink queue are preserved, while MAC state is reset.',
+})
+
 const defaultValues = {
   mac_settings: {
     ping_slot_periodicity: '',
@@ -58,7 +69,7 @@ const defaultValues = {
 }
 
 const NetworkServerForm = React.memo(props => {
-  const { device, onSubmit, onSubmitSuccess, mayEditKeys, mayReadKeys } = props
+  const { device, onSubmit, onSubmitSuccess, mayEditKeys, mayReadKeys, onMacReset } = props
   const { multicast = false, supports_join = false, supports_class_b = false } = device
 
   const isABP = isDeviceABP(device)
@@ -117,6 +128,21 @@ const NetworkServerForm = React.memo(props => {
       ),
     [device, initialActivationMode, validationContext],
   )
+
+  const handleMacReset = React.useCallback(async () => {
+    try {
+      await onMacReset()
+      toast({
+        message: m.resetSuccess,
+        type: toast.types.SUCCESS,
+      })
+    } catch (err) {
+      toast({
+        message: m.resetFailure,
+        type: toast.types.ERROR,
+      })
+    }
+  }, [onMacReset])
 
   const onFormSubmit = React.useCallback(
     async (values, { resetForm, setSubmitting }) => {
@@ -348,6 +374,16 @@ const NetworkServerForm = React.memo(props => {
       <MacSettingsSection activationMode={initialActivationMode} isClassB={isClassB} />
       <SubmitBar>
         <Form.Submit component={SubmitButton} message={sharedMessages.saveChanges} />
+        <ModalButton
+          type="button"
+          warning
+          naked
+          message={m.resetTitle}
+          modalData={{
+            message: m.modalMessage,
+          }}
+          onApprove={handleMacReset}
+        />
       </SubmitBar>
     </Form>
   )
@@ -357,6 +393,7 @@ NetworkServerForm.propTypes = {
   device: PropTypes.device.isRequired,
   mayEditKeys: PropTypes.bool.isRequired,
   mayReadKeys: PropTypes.bool.isRequired,
+  onMacReset: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onSubmitSuccess: PropTypes.func.isRequired,
 }

@@ -26,6 +26,7 @@ import {
   GET_DEVICES_LIST_SUCCESS,
   GET_DEV_SUCCESS,
   UPDATE_DEV_SUCCESS,
+  RESET_DEV_SUCCESS,
 } from '@console/store/actions/devices'
 import { GET_APP_EVENT_MESSAGE_SUCCESS } from '@console/store/actions/applications'
 
@@ -104,6 +105,27 @@ const devices = (state = defaultState, { type, payload, event }) => {
       }
 
       return mergeDerived(updatedState, id, derived)
+    case RESET_DEV_SUCCESS:
+      const combinedId = getCombinedDeviceId(payload)
+      const device = state.entities[combinedId]
+      const isOTAA = Boolean(device.supports_join)
+
+      const resetDevice = { ...device }
+      if (isOTAA && resetDevice.session) {
+        // Reset session keys and last seen information for joined OTAA end devices.
+        resetDevice.session.keys = undefined
+        return mergeDerived({ ...state, [combinedId]: resetDevice }, combinedId, {
+          lastSeen: undefined,
+          uplinkFrameCount: undefined,
+          downlinkFrameCount: undefined,
+        })
+      }
+
+      return mergeDerived(state, combinedId, {
+        lastSeen: undefined,
+        uplinkFrameCount: undefined,
+        downlinkFrameCount: undefined,
+      })
     case GET_DEVICES_LIST_SUCCESS:
       return payload.entities.reduce(
         (acc, dev) => {
