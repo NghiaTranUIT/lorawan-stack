@@ -203,6 +203,7 @@ func New(ctx context.Context, opts ...Option) (*Server, error) {
 	}
 
 	router := root.NewRoute().Subrouter()
+	router.NotFoundHandler = http.HandlerFunc(webhandlers.NotFound)
 	router.Use(
 		mux.MiddlewareFunc(webmiddleware.Redirect(redirectConfig)),
 	)
