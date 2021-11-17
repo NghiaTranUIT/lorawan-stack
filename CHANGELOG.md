@@ -13,6 +13,7 @@ For details about compatibility between different releases, see the **Commitment
 
 - Support for fine timestamps and frequency offsets sent by gateways with SX1303 concentrator using the legacy UDP protocol.
 - Default `Cache-Control: no-store` headers.
+- `Cache-Control: public, max-age=604800, immutable` headers for hashed static files.
 
 ### Changed
 
