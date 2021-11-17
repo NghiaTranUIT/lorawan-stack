@@ -15,6 +15,7 @@
 import React from 'react'
 import { defineMessages } from 'react-intl'
 
+import Link from '@ttn-lw/components/link'
 import ModalButton from '@ttn-lw/components/button/modal-button'
 import SubmitButton from '@ttn-lw/components/submit-button'
 import SubmitBar from '@ttn-lw/components/submit-bar'
@@ -25,6 +26,8 @@ import Notification from '@ttn-lw/components/notification'
 import Checkbox from '@ttn-lw/components/checkbox'
 import toast from '@ttn-lw/components/toast'
 
+import Message from '@ttn-lw/lib/components/message'
+
 import PhyVersionInput from '@console/components/phy-version-input'
 import LorawanVersionInput from '@console/components/lorawan-version-input'
 import MacSettingsSection from '@console/components/mac-settings-section'
@@ -32,7 +35,7 @@ import MacSettingsSection from '@console/components/mac-settings-section'
 import { NsFrequencyPlansSelect } from '@console/containers/freq-plans-select'
 import DevAddrInput from '@console/containers/dev-addr-input'
 
-import tooltipIds from '@ttn-lw/lib/constants/glossary-ids'
+import tooltipIds from '@ttn-lw/lib/constants/tooltip-ids'
 import diff from '@ttn-lw/lib/diff'
 import sharedMessages from '@ttn-lw/lib/shared-messages'
 import PropTypes from '@ttn-lw/lib/prop-types'
@@ -55,11 +58,12 @@ import {
 import validationSchema from './validation-schema'
 
 const m = defineMessages({
-  resetTitle: 'Reset to factory defaults',
+  resetTitle: 'Session and MAC state reset',
+  resetButtonTitle: 'Reset session and MAC state',
   resetSuccess: 'End device reset',
-  resetFailure: 'There was an error resetting the end device',
+  resetFailure: 'There was an error and the end device session and MAC state could not be reset',
   modalMessage:
-    'Are you sure you want to reset session context and MAC state of this end device? For OTAA all data is wiped and end device must rejoin, for ABP session keys, device address and downlink queue are preserved, while MAC state is reset.',
+    'Are you sure you want to reset the session context and MAC state of this end device?{break}{break}This will have the following consequences:<ul><li>For <OTAADocLink>OTAA</OTAADocLink>-activated end devices <b>all session and MAC data is wiped and the end device MUST rejoin</b></li><li>For <ABPDocLink>ABP</ABPDocLink>-activated end devices, session keys, device address and downlink queue are preserved, while <b>the MAC state is reset</b></li></ul>',
 })
 
 const defaultValues = {
@@ -371,19 +375,43 @@ const NetworkServerForm = React.memo(props => {
           )}
         </>
       )}
-      <MacSettingsSection activationMode={initialActivationMode} isClassB={isClassB} />
-      <SubmitBar>
-        <Form.Submit component={SubmitButton} message={sharedMessages.saveChanges} />
+      <Form.InfoField title={m.resetTitle} tooltipId={tooltipIds.RESET_MAC}>
         <ModalButton
           type="button"
           warning
           naked
-          message={m.resetTitle}
+          message={m.resetButtonTitle}
           modalData={{
-            message: m.modalMessage,
+            children: (
+              <div>
+                <Message
+                  content={m.modalMessage}
+                  values={{
+                    b: msg => <b>{msg}</b>,
+                    ul: msg => <ul>{msg}</ul>,
+                    li: msg => <li>{msg}</li>,
+                    break: <br />,
+                    OTAADocLink: msg => (
+                      <Link.DocLink secondary path="/devices/abp-vs-otaa#ota">
+                        {msg}
+                      </Link.DocLink>
+                    ),
+                    ABPDocLink: msg => (
+                      <Link.DocLink secondary path="/devices/abp-vs-otaa#abp">
+                        {msg}
+                      </Link.DocLink>
+                    ),
+                  }}
+                />
+              </div>
+            ),
           }}
           onApprove={handleMacReset}
         />
+      </Form.InfoField>
+      <MacSettingsSection activationMode={initialActivationMode} isClassB={isClassB} />
+      <SubmitBar>
+        <Form.Submit component={SubmitButton} message={sharedMessages.saveChanges} />
       </SubmitBar>
     </Form>
   )

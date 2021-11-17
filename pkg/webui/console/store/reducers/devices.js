@@ -114,18 +114,14 @@ const devices = (state = defaultState, { type, payload, event }) => {
       if (isOTAA && resetDevice.session) {
         // Reset session keys and last seen information for joined OTAA end devices.
         resetDevice.session.keys = undefined
-        return mergeDerived({ ...state, [combinedId]: resetDevice }, combinedId, {
-          lastSeen: undefined,
-          uplinkFrameCount: undefined,
-          downlinkFrameCount: undefined,
-        })
+        return mergeDerived(
+          { ...state, [combinedId]: resetDevice },
+          combinedId,
+          defaultState.derived,
+        )
       }
 
-      return mergeDerived(state, combinedId, {
-        lastSeen: undefined,
-        uplinkFrameCount: undefined,
-        downlinkFrameCount: undefined,
-      })
+      return mergeDerived(state, combinedId, defaultState.derived)
     case GET_DEVICES_LIST_SUCCESS:
       return payload.entities.reduce(
         (acc, dev) => {
