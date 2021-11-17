@@ -82,9 +82,14 @@ func Error(w http.ResponseWriter, r *http.Request, err error) {
 	if errPtr, ok := r.Context().Value(errorContextValue).(*error); ok && errPtr != nil {
 		*errPtr = err
 	}
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "  ")
-	enc.Encode(err)
+	if strings.Contains(r.Header.Get("Accept"), "text/html") {
+		w.Header().Set("Content-Type", "text/html")
+		Template.RenderError(w, err, code)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		enc.Encode(err)
+	}
 }
